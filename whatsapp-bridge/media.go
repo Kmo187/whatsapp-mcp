@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -18,7 +19,9 @@ import (
 // from being written outside the media folder.
 func safeFilename(name string) string {
 	name = strings.ReplaceAll(name, "\\", "/")
-	name = strings.TrimSpace(filepath.Base("/" + name))
+	// path (not filepath): separators were normalised to "/" above, and
+	// filepath.Base would return "\\" for an empty name on Windows.
+	name = strings.TrimSpace(path.Base("/" + name))
 	if name == "/" || name == "." || name == ".." {
 		return ""
 	}
