@@ -19,7 +19,7 @@ jobs:
           - { os: windows-latest, name: windows-amd64, ext: ".exe" }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: whatsapp-bridge/go.mod
           cache-dependency-path: whatsapp-bridge/go.sum
