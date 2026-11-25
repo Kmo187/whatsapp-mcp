@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.1 – 2026-11-25
+
+### Fixed
+- Windows: empty document names were turned into "_" (CI failure on windows-latest).
+- Release workflow: dropped the Intel macOS build, whose runner image is no longer available.
+
 ## v1.0.0 – 2026-11-25
 
 First release of this fork of [lharries/whatsapp-mcp](https://github.com/lharries/whatsapp-mcp).
