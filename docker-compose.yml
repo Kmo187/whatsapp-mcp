@@ -1,0 +1,19 @@
+# Runs the WhatsApp bridge in Docker. The MCP server keeps running on your
+# machine and reads the database from ./whatsapp-bridge/store.
+#
+#   cp .env.example .env     # set WHATSAPP_BRIDGE_TOKEN
+#   docker compose up -d
+#   open http://127.0.0.1:8080/?token=<your token>   # scan the QR code
+services:
+  whatsapp-bridge:
+    build: .
+    image: whatsapp-mcp-bridge:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      WHATSAPP_BRIDGE_TOKEN: ${WHATSAPP_BRIDGE_TOKEN:?Set WHATSAPP_BRIDGE_TOKEN in .env}
+      TZ: ${TZ:-UTC}
+    ports:
+      - "127.0.0.1:8080:8080"   # only reachable from this computer
+    volumes:
+      - ./whatsapp-bridge/store:/data/store

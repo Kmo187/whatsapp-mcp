@@ -1,0 +1,8 @@
+**/store
+**/*.db
+**/*.log
+**/*.exe
+whatsapp-mcp-server
+.git
+.github
+docs

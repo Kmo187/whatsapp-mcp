@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatsApp Bridge</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2322c55e'/%3E%3Cpath d='M10 22l2-5a7 7 0 1 1 3 3z' fill='none' stroke='white' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#fafafa;--panel:#ffffff;--panel-2:#f4f4f5;--border:#e4e4e7;--text:#09090b;--muted:#71717a;
+  --accent:#16a34a;--accent-soft:#dcfce7;--warn:#d97706;--warn-soft:#fef3c7;--bad:#dc2626;--bad-soft:#fee2e2;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);--radius:12px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root[data-theme=auto]{
+  --bg:#09090b;--panel:#111113;--panel-2:#18181b;--border:#27272a;--text:#fafafa;--muted:#a1a1aa;
+  --accent:#22c55e;--accent-soft:rgba(34,197,94,.12);--warn:#f59e0b;--warn-soft:rgba(245,158,11,.12);--bad:#f87171;--bad-soft:rgba(248,113,113,.12);
+  --shadow:0 0 0 1px rgba(255,255,255,.02);}}
+:root[data-theme=dark]{
+  --bg:#09090b;--panel:#111113;--panel-2:#18181b;--border:#27272a;--text:#fafafa;--muted:#a1a1aa;
+  --accent:#22c55e;--accent-soft:rgba(34,197,94,.12);--warn:#f59e0b;--warn-soft:rgba(245,158,11,.12);--bad:#f87171;--bad-soft:rgba(248,113,113,.12);
+  --shadow:0 0 0 1px rgba(255,255,255,.02);}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.logo{width:28px;height:28px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.logo svg{width:16px;height:16px}
+h1{font-size:15px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--panel)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.pill.ok .dot{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pill.warn .dot{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft)}
+.pill.bad .dot{background:var(--bad);box-shadow:0 0 0 3px var(--bad-soft)}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:var(--panel-2)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media (max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.stat{padding:16px}
+.stat .k{color:var(--muted);font-size:12px}
+.stat .v{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.section{padding:20px;margin-bottom:16px}
+.section h2{font-size:13px;font-weight:600;margin:0 0 4px}
+.section p{margin:0;color:var(--muted)}
+.pair{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+.qr{width:240px;height:240px;border-radius:10px;background:#fff;padding:8px;border:1px solid var(--border);display:grid;place-items:center;color:#71717a;font-size:12px}
+.qr img{width:100%;height:100%;image-rendering:pixelated}
+ol{margin:12px 0 0;padding-left:18px;color:var(--muted)}
+ol li{margin:4px 0}
+ol b{color:var(--text);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--border)}
+.tag.pending{color:var(--warn)}.tag.sent{color:var(--accent)}.tag.failed{color:var(--bad)}
+.mono{font-family:var(--mono);font-size:12px}
+pre{margin:12px 0 0;padding:14px;border-radius:10px;background:var(--panel-2);border:1px solid var(--border);overflow:auto;font:12px/1.6 var(--mono)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{color:var(--muted);padding:12px 0}
+.err{color:var(--bad);margin-top:8px}
+input{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 10px;min-width:260px}
+.hidden{display:none!important}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:6px 16px;margin-top:12px}
+.kv div:nth-child(odd){color:var(--muted)}
+footer{color:var(--muted);font-size:12px;margin-top:24px;display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"><path d="M5 19l1.4-4.2A7.5 7.5 0 1 1 9.3 18z"/></svg></div>
+    <div><h1>WhatsApp Bridge</h1><div class="sub" id="account">Local bridge for the WhatsApp MCP server</div></div>
+    <div class="spacer"></div>
+    <span class="pill" id="pill"><span class="dot"></span><span id="pillText">Loading…</span></span>
+    <button id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <div class="card section hidden" id="tokenCard">
+    <h2>Bridge token required</h2>
+    <p>This bridge is protected with <span class="mono">WHATSAPP_BRIDGE_TOKEN</span>. Enter it once; it is stored in a secure cookie.</p>
+    <form class="row" style="margin-top:12px" id="tokenForm" action="javascript:void 0">
+      <input type="password" id="tokenInput" placeholder="Token" autocomplete="off" aria-label="Bridge token">
+      <button type="submit">Unlock</button>
+    </form>
+  </div>
+
+  <div class="card section hidden" id="pairCard">
+    <div class="pair">
+      <div class="qr" id="qr">Waiting for QR code…</div>
+      <div>
+        <h2>Link your WhatsApp</h2>
+        <p>Scan the code with the phone that has your WhatsApp account. It refreshes automatically.</p>
+        <ol>
+          <li>Open <b>WhatsApp</b> on your phone</li>
+          <li>Go to <b>Settings → Linked devices</b></li>
+          <li>Tap <b>Link a device</b> and point the camera at this code</li>
+        </ol>
+        <p style="margin-top:12px" id="qrExp"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" id="stats">
+    <div class="card stat"><div class="k">Chats</div><div class="v" id="sChats">–</div></div>
+    <div class="card stat"><div class="k">Messages stored</div><div class="v" id="sMsgs">–</div></div>
+    <div class="card stat"><div class="k">Received since start</div><div class="v" id="sRecv">–</div></div>
+    <div class="card stat"><div class="k">Scheduled</div><div class="v" id="sSched">–</div></div>
+  </div>
+
+  <div class="card section">
+    <h2>Status</h2>
+    <p>Live state of the connection. The MCP server talks to this bridge on <span class="mono" id="listen">…</span>.</p>
+    <div class="kv" id="kv"></div>
+    <div class="err hidden" id="lastErr"></div>
+  </div>
+
+  <div class="card section">
+    <div class="row" style="justify-content:space-between">
+      <div><h2>Scheduled messages</h2><p>Created by Claude with <span class="mono">schedule_message</span>. The bridge sends them on time while it runs.</p></div>
+      <button id="refresh">Refresh</button>
+    </div>
+    <div id="sched" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card section">
+    <h2>Connect to Claude</h2>
+    <p>Add the MCP server to <span class="mono">claude_desktop_config.json</span> (or run <span class="mono">claude mcp add</span>), then restart the app.</p>
+<pre id="cfg">{
+  "mcpServers": {
+    "whatsapp": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/whatsapp-mcp/whatsapp-mcp-server", "run", "main.py"]
+    }
+  }
+}</pre>
+  </div>
+
+  <footer><span id="ver"></span><a href="https://github.com/Kmo187/whatsapp-mcp" target="_blank" rel="noopener">GitHub</a><span>Messages never leave this computer unless an AI tool reads them.</span></footer>
+</div>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const root = document.documentElement;
+  const saved = (()=>{try{return localStorage.getItem('theme')}catch(e){return null}})();
+  if(saved) root.dataset.theme = saved;
+  $('theme').onclick = () => {
+    const dark = root.dataset.theme === 'dark' || (root.dataset.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try{localStorage.setItem('theme', root.dataset.theme)}catch(e){}
+  };
+  $('tokenForm').onsubmit = () => { location.href = '/?token=' + encodeURIComponent($('tokenInput').value); };
+
+  const labels = {connected:['Connected','ok'],waiting_for_qr:['Waiting for QR scan','warn'],connecting:['Connecting…','warn'],
+    starting:['Starting…','warn'],disconnected:['Disconnected – reconnecting','bad'],logged_out:['Logged out','bad']};
+  const fmt = n => (n ?? 0).toLocaleString();
+  const ago = iso => { if(!iso) return '–'; const s = (Date.now() - new Date(iso))/1000;
+    if(s < 60) return 'just now'; if(s < 3600) return Math.floor(s/60)+' min ago'; if(s < 86400) return Math.floor(s/3600)+' h ago';
+    return new Date(iso).toLocaleString(); };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let qrStamp = '';
+
+  async function api(path){
+    const r = await fetch(path, {credentials:'same-origin', cache:'no-store'});
+    if(r.status === 401){ $('tokenCard').classList.remove('hidden'); throw new Error('token'); }
+    return r.json();
+  }
+  async function tick(){
+    try{
+      const s = await api('/api/status');
+      $('tokenCard').classList.add('hidden');
+      const b = s.bridge; const [txt, cls] = labels[b.state] || [b.state, ''];
+      $('pill').className = 'pill ' + cls; $('pillText').textContent = txt;
+      $('account').textContent = s.account ? 'Linked to +' + s.account : 'Not linked yet';
+      $('sChats').textContent = fmt(s.chats); $('sMsgs').textContent = fmt(s.messages);
+      $('sRecv').textContent = fmt(b.received_since_start); $('sSched').textContent = fmt(s.scheduled_pending);
+      $('listen').textContent = s.listen; $('ver').textContent = 'Bridge ' + s.version;
+      $('kv').innerHTML = [
+        ['Connected since', b.connected_at ? ago(b.connected_at) : '–'],
+        ['Last message', ago(b.last_message_at || s.last_message_time)],
+        ['Sent since start', fmt(b.sent_since_start)],
+        ['History synced', fmt(b.history_messages_since_start) + ' messages'],
+        ['Reconnects', fmt(b.reconnects)],
+        ['Token protection', s.token_required ? 'On' : 'Off (loopback only)'],
+        ['Message text in logs', s.log_message_content ? 'On' : 'Off'],
+      ].map(([k,v]) => '<div>'+esc(k)+'</div><div>'+esc(v)+'</div>').join('');
+      $('lastErr').classList.toggle('hidden', !b.last_error); $('lastErr').textContent = b.last_error || '';
+      const pairing = b.state === 'waiting_for_qr' || (!s.account && b.state !== 'connected');
+      $('pairCard').classList.toggle('hidden', !pairing);
+      if(pairing && b.has_qr && b.qr_expires_at !== qrStamp){
+        qrStamp = b.qr_expires_at;
+        $('qr').innerHTML = '<img alt="WhatsApp pairing QR code" src="/api/qr.svg?t=' + Date.now() + '">';
+      }
+      if(b.qr_expires_at){ const sec = Math.max(0, Math.round((new Date(b.qr_expires_at) - Date.now())/1000)); $('qrExp').textContent = 'Code refreshes in ' + sec + ' s'; }
+    }catch(e){
+      if(e.message !== 'token'){ $('pill').className='pill bad'; $('pillText').textContent='Bridge not reachable'; }
+    }
+  }
+  async function loadSched(){
+    try{
+      const d = await api('/api/schedule');
+      const rows = (d.scheduled || []).slice().reverse().slice(0, 25);
+      if(!rows.length){ $('sched').innerHTML = '<div class="empty">No scheduled messages yet. Try asking Claude: “Remind me on WhatsApp tomorrow at 9:15 to call the dentist.”</div>'; return; }
+      $('sched').innerHTML = '<table><thead><tr><th>#</th><th>When</th><th>To</th><th>Message</th><th>Status</th></tr></thead><tbody>' +
+        rows.map(m => '<tr><td class="mono">'+m.id+'</td><td>'+esc(new Date(m.send_at).toLocaleString())+'</td><td class="mono">'+esc(m.recipient)+
+          '</td><td>'+esc((m.message||'').slice(0,120))+(m.media_path?' <span class="tag">file</span>':'')+(m.error?'<div class="err">'+esc(m.error)+'</div>':'')+
+          '</td><td><span class="tag '+esc(m.status)+'">'+esc(m.status)+'</span></td></tr>').join('') + '</tbody></table>';
+    }catch(e){}
+  }
+  $('refresh').onclick = loadSched;
+  tick(); loadSched();
+  setInterval(tick, 2000); setInterval(loadSched, 15000);
+})();
+</script>
+</body>
+</html>

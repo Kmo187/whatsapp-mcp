@@ -1,110 +1,62 @@
+"""Convert audio files to Ogg Opus, the format WhatsApp voice messages need."""
+
+from __future__ import annotations
+
 import os
+import shutil
 import subprocess
+import sys
 import tempfile
 
-def convert_to_opus_ogg(input_file, output_file=None, bitrate="32k", sample_rate=24000):
-    """
-    Convert an audio file to Opus format in an Ogg container.
-    
-    Args:
-        input_file (str): Path to the input audio file
-        output_file (str, optional): Path to save the output file. If None, replaces the
-                                    extension of input_file with .ogg
-        bitrate (str, optional): Target bitrate for Opus encoding (default: "32k")
-        sample_rate (int, optional): Sample rate for output (default: 24000)
-    
-    Returns:
-        str: Path to the converted file
-        
+
+def convert_to_opus_ogg(input_file: str, output_file: str | None = None, bitrate: str = "32k", sample_rate: int = 24000) -> str:
+    """Convert ``input_file`` to Opus in an Ogg container and return the output path.
+
     Raises:
-        FileNotFoundError: If the input file doesn't exist
-        RuntimeError: If the ffmpeg conversion fails
+        FileNotFoundError: the input file does not exist
+        RuntimeError: ffmpeg is missing or the conversion failed
     """
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"Input file not found: {input_file}")
-    
-    # If no output file is specified, replace the extension with .ogg
+    if shutil.which("ffmpeg") is None:
+        raise RuntimeError("ffmpeg is not installed or not on PATH (install it, or send the file with send_file instead)")
     if output_file is None:
         output_file = os.path.splitext(input_file)[0] + ".ogg"
-    
-    # Ensure the output directory exists
-    output_dir = os.path.dirname(output_file)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Build the ffmpeg command
+    out_dir = os.path.dirname(output_file)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
     cmd = [
-        "ffmpeg",
-        "-i", input_file,
-        "-c:a", "libopus",
-        "-b:a", bitrate,
-        "-ar", str(sample_rate),
-        "-application", "voip",  # Optimize for voice
-        "-vbr", "on",           # Variable bitrate
-        "-compression_level", "10",  # Maximum compression
-        "-frame_duration", "60",     # 60ms frames (good for voice)
-        "-y",                        # Overwrite output file if it exists
-        output_file
-    ]
-    
+        "ffmpeg", "-i", input_file,
+        "-c:a", "libopus", "-b:a", bitrate, "-ar", str(sample_rate),
+        "-application", "voip", "-vbr", "on", "-compression_level", "10", "-frame_duration", "60",
+        "-y", output_file,
+    ]  # fmt: skip
     try:
-        # Run the ffmpeg command and capture output
-        process = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True
-        )
-        return output_file
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Failed to convert audio. You likely need to install ffmpeg {e.stderr}")
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"ffmpeg failed to convert the audio: {exc.stderr.strip()[-500:]}") from exc
+    return output_file
 
 
-def convert_to_opus_ogg_temp(input_file, bitrate="32k", sample_rate=24000):
-    """
-    Convert an audio file to Opus format in an Ogg container and store in a temporary file.
-    
-    Args:
-        input_file (str): Path to the input audio file
-        bitrate (str, optional): Target bitrate for Opus encoding (default: "32k")
-        sample_rate (int, optional): Sample rate for output (default: 24000)
-    
-    Returns:
-        str: Path to the temporary file with the converted audio
-        
-    Raises:
-        FileNotFoundError: If the input file doesn't exist
-        RuntimeError: If the ffmpeg conversion fails
-    """
-    # Create a temporary file with .ogg extension
-    temp_file = tempfile.NamedTemporaryFile(suffix=".ogg", delete=False)
-    temp_file.close()
-    
+def convert_to_opus_ogg_temp(input_file: str, bitrate: str = "32k", sample_rate: int = 24000) -> str:
+    """Like :func:`convert_to_opus_ogg`, but writes to a new temporary file."""
+    fd, temp_path = tempfile.mkstemp(suffix=".ogg")
+    os.close(fd)
     try:
-        # Convert the audio
-        convert_to_opus_ogg(input_file, temp_file.name, bitrate, sample_rate)
-        return temp_file.name
-    except Exception as e:
-        # Clean up the temporary file if conversion fails
-        if os.path.exists(temp_file.name):
-            os.unlink(temp_file.name)
-        raise e
+        return convert_to_opus_ogg(input_file, temp_path, bitrate, sample_rate)
+    except Exception:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        raise
 
 
 if __name__ == "__main__":
-    # Example usage
-    import sys
-    
     if len(sys.argv) < 2:
-        print("Usage: python audio.py input_file [output_file]")
+        print("Usage: python audio.py input_file")
         sys.exit(1)
-    
-    input_file = sys.argv[1]
-    
     try:
-        result = convert_to_opus_ogg_temp(input_file)
-        print(f"Successfully converted to: {result}")
-    except Exception as e:
-        print(f"Error: {e}")
+        print(f"Successfully converted to: {convert_to_opus_ogg_temp(sys.argv[1])}")
+    except Exception as exc:
+        print(f"Error: {exc}")
         sys.exit(1)

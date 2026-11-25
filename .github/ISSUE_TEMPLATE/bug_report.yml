@@ -1,0 +1,42 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Never paste message contents, phone numbers, tokens or files from `store/`** – they are private.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of the `get_bridge_status` tool (or http://127.0.0.1:8080/api/status)
+      description: Remove the `account` value before posting.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant bridge log lines
+      render: text
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Docker]
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: Claude Desktop 1.x, Claude Code, Cursor, …
+  - type: input
+    id: version
+    attributes:
+      label: Bridge version (`whatsapp-bridge -version`)

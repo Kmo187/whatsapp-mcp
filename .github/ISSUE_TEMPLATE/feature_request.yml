@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a tool, workflow or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do with WhatsApp + AI?
+      description: Describe the task, e.g. "Every evening I want a list of chats I haven't answered".
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: How could it work?
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This feature does not send data anywhere except WhatsApp itself, or I explained why it must.
